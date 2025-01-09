@@ -1,61 +1,71 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("data-form");
-    const nameInput = document.getElementById("name-input");
-    const groupInput = document.getElementById("group-input");
-    const addButton = document.getElementById("add-button");
-    const clearButton = document.getElementById("clear-button");
-    const tableBody = document.getElementById("data-table").querySelector("tbody");
-    const errorDiv = document.getElementById("errorDiv");
-    errorDiv.className = 'error';
-    form.appendChild(errorDiv)
+import { getProducts, getCompanies, getUsers, getReviews } from './api.js';
+import Company from './classes/Company.js';
+import Product from './classes/Product.js';
+import Review from './classes/Review.js';
+import User from './classes/User.js';
 
-    function addRow(){
+async function processData() {
+    try {
+        const [rawProducts, rawCompanies, rawUsers, rawReviews] = await Promise.all([
+            getProducts(),
+            getCompanies(),
+            getUsers(),
+            getReviews()
+        ]);
 
-        errorDiv.textContent = '';
+        const users = rawUsers.map(user => new User(user));
+        const reviews = rawReviews.map(review => {
+            const user = users.find(u => u.id === review.userId);
+            return new Review({ ...review, user });
+        });
 
-        if(nameInput.value.trim() === '' || groupInput.value.trim() === ''){
-            errorDiv.textContent = "Все поля обязательны к заполнению";
-            return;
-        }
+        const products = rawProducts.map(product => {
+            const productReviews = reviews.filter(review =>
+                product.reviewIds.includes(review.id)
+            );
+            return new Product({ ...product, reviews: productReviews });
+        });
 
-        const namePattern = /^[а-яА-ЯёЁa-zA-Z\s\-]+$/;
-        const groupPattern = /^[0-9\-]+$/;
+        const companies = rawCompanies.map(company => {
+            const companyProducts = products.filter(product =>
+                product.companyId === company.id
+            );
+            return new Company({ ...company, products: companyProducts });
+        });
 
-        if(!namePattern.test(nameInput.value)){
-            errorDiv.textContent = 'Имя должно содержать только буквы';
-            return;
-        }
-
-        if(!groupPattern.test(groupInput.value)){
-            errorDiv.textContent = 'Группа должна содержать только цифры';
-            return;
-        }
-
-        const newRow = document.createElement('tr');
-        newRow.innerHTML = `
-            <td>${nameInput.value}</td>
-            <td>${groupInput.value}</td>
-            <td><button class = "delete-button">X</button></td>
-        `;
-
-        tableBody.appendChild(newRow);
-
-        nameInput.value = '';
-        groupInput.value = '';
+        return companies;
+    } catch (error) {
+        console.error('Ошибка при обработке данных:', error);
+        throw error;
     }
+}
 
-    function clearTable(){
-        tableBody.innerHTML = '';
-    }
-
-    function deleteRow(event){
-        if(event.target.classList.contains('delete-button')){
-            const row = event.target.closest("tr");
-            tableBody.removeChild(row);
-        }
-    }
-
-    addButton.addEventListener('click', addRow);
-    clearButton.addEventListener('click', clearTable);
-    tableBody.addEventListener('click', deleteRow);
-});
+//проверка
+processData()
+    .then(companies => {
+        console.log('\n=== Результаты обработки данных ===\n');
+        console.log('    Компании и их продукты:');
+        companies.forEach(company => {
+            console.log(`\n${company.name} (${company.country}, основана в ${company.created})`);
+            console.log('Продукты:');
+            company.products.forEach(product => {
+                console.log(`- ${product.name}`);
+                if (product.reviews.length > 0) {
+                    console.log('  Отзывы:');
+                    product.reviews.forEach(review => {
+                        console.log(`    -- ${review.user.name}: "${review.text}"`);
+                    });
+                }
+            });
+        });
+        return companies;
+    })
+    .catch(error => {
+        console.error('      Произошла ошибка при обработке данных:', error);
+        console.error('Детали ошибки:', error.stack);
+        throw error;
+    })
+    .finally(() => {
+        console.log('\n      Обработка данных завершена');
+        console.log('=================================\n');
+    });
