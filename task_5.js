@@ -1,9 +1,6 @@
 function isValid(s) {
     const stack = [];
 
-    if (s.trim().length === 0) {
-        return true;
-    }
 
     for ( let char of s ) {
         switch (char) {

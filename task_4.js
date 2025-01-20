@@ -1,22 +1,12 @@
 function removeDuplicates(nums) {
-    if (nums.length === 0) {
-        return 0;
-    }
-
     let uniqueIndex = 0;
 
-    nums.forEach((num, i) => {
+    nums.forEach((num) => {
         if (num !== nums[uniqueIndex]) {
             uniqueIndex++;
             nums[uniqueIndex] = num;
         }
     });
-
-    nums.forEach((_, i) => {
-        if (i > uniqueIndex) {
-            nums[i] = '_';
-        }
-    })
 
     return uniqueIndex + 1;
 }

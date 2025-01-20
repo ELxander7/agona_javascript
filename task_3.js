@@ -11,6 +11,8 @@ function romanToInt(str) {
             return result + currentValue;
         }
     }, 0);
+
+    return result;
 }
 
 const romanValue = {
