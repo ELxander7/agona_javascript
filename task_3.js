@@ -1,8 +1,8 @@
-function romanToInt(str) {
+function romanToInt(s) {
     let result = 0;
     let prevValue = 0;
 
-    const values = [...str].map(char => romanValue[char]);
+    const values = [...s].map(char => romanValue[char]);
 
     return values.reduce((result, currentValue, index, array) => {
         if (index < array.length - 1 && currentValue < array[index + 1]) {
@@ -11,8 +11,6 @@ function romanToInt(str) {
             return result + currentValue;
         }
     }, 0);
-
-    return result;
 }
 
 const romanValue = {

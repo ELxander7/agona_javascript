@@ -1,4 +1,9 @@
 function isValid(s) {
+
+    if (s.trim().length === 0) {
+        return true;
+    }
+
     const stack = [];
 
 
